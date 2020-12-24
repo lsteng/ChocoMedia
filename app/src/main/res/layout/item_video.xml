@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="3dp">
+    android:padding="5dp">
 
     <ImageView
         android:id="@+id/thumbIV"
@@ -19,7 +19,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:layout_weight="3"
-        android:layout_marginLeft="3dp"
+        android:layout_marginLeft="5dp"
         android:gravity="center_vertical">
 
         <TextView
