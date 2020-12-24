@@ -47,6 +47,8 @@ dependencies {
     implementation 'com.squareup.okio:okio:2.0.0'
     implementation 'com.google.code.gson:gson:2.8.5'
 
+    implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
+
     //kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     //room

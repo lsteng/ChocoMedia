@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
@@ -13,12 +14,14 @@ import reson.chocomedia.constant.GlobalConstant
 import reson.chocomedia.util.HttpUtil
 import reson.chocomedia.util.VideoBean
 import reson.chocomedia.util.VideoListBean
+import reson.chocomedia.view.VideoListRecyclerAdapter
 import kotlin.coroutines.CoroutineContext
 
 class MainActivity: AppCompatActivity(), CoroutineScope {
     val TAG = "MainActivity"
-
     lateinit var mActivity: Activity
+    var videoListRecyclerAdapter: VideoListRecyclerAdapter? = null
+
     lateinit var job: Job
     //此errorHandler用來接 CoroutineScope 沒有被 try-catch 包起來的 exceptions
     val errorHandler = CoroutineExceptionHandler { _, error ->
@@ -38,6 +41,9 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         mActivity = this
+        recycler.layoutManager = LinearLayoutManager(mActivity)
+        recycler.setHasFixedSize(true)
+        recycler.adapter = videoListRecyclerAdapter
 
         val gson = Gson()
         job = Job()
@@ -45,12 +51,10 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
             val response = HttpUtil.getDataSting(GlobalConstant.ApiUrl)
             val videoList = gson.fromJson(response, VideoListBean::class.java)
             mActivity.runOnUiThread{
-                if (videoList?.data != null) {
-                    for (video in videoList?.data){
-                        logTV.append("${video.name} \n")
-                    }
+                if (videoList.data.isNotEmpty()) {
+                    videoListRecyclerAdapter = VideoListRecyclerAdapter(videoList.data, mActivity)
+                    recycler.adapter = videoListRecyclerAdapter
                 }
-                logTV.append(videoList?.data?.get(0)?.name)
                 if (progressBar != null){
                     progressBar.visibility = View.GONE
                 }
