@@ -11,9 +11,10 @@ import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import reson.chocomedia.constant.GlobalConstant
+import reson.chocomedia.database.VideoBean
+import reson.chocomedia.database.VideoDatabase
 import reson.chocomedia.util.HttpUtil
-import reson.chocomedia.util.VideoBean
-import reson.chocomedia.util.VideoListBean
+import reson.chocomedia.database.VideoListBean
 import reson.chocomedia.view.VideoListRecyclerAdapter
 import kotlin.coroutines.CoroutineContext
 
@@ -50,14 +51,15 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
         launch {
             val response = HttpUtil.getDataSting(GlobalConstant.ApiUrl)
             val videoList = gson.fromJson(response, VideoListBean::class.java)
-            mActivity.runOnUiThread{
-                if (videoList.data.isNotEmpty()) {
-                    videoListRecyclerAdapter = VideoListRecyclerAdapter(videoList.data, mActivity)
-                    recycler.adapter = videoListRecyclerAdapter
-                }
-                if (progressBar != null){
-                    progressBar.visibility = View.GONE
-                }
+            VideoDatabase.getInstance(mActivity)?.videoInfoDao()?.insertAll(videoList.data)
+            showResult(videoList.data)
+        }
+
+        search.setOnClickListener {
+            launch {
+                val keyWord = searchTV.text.toString().trim()
+                var videoInfoList = VideoDatabase.getInstance(mActivity)?.videoInfoDao()?.searchVideoByName(keyWord)
+                showResult(videoInfoList)
             }
         }
     }
@@ -65,5 +67,19 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
     override fun onDestroy() {
         super.onDestroy()
         job.cancel()
+    }
+
+    fun showResult(videoInfoList: List<VideoBean>?){
+        mActivity.runOnUiThread{
+            videoInfoList.let {
+                if (it!=null && it.isNotEmpty()) {
+                    videoListRecyclerAdapter = VideoListRecyclerAdapter(it, mActivity)
+                    recycler.adapter = videoListRecyclerAdapter
+                }
+            }
+            if (progressBar != null){
+                progressBar.visibility = View.GONE
+            }
+        }
     }
 }

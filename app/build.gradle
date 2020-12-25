@@ -46,8 +46,10 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.6.0'
     implementation 'com.squareup.okio:okio:2.0.0'
     implementation 'com.google.code.gson:gson:2.8.5'
-
+    // for Image URL
     implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
+    // for DB
+    implementation 'com.facebook.stetho:stetho:1.5.0'
 
     //kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"

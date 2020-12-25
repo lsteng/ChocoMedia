@@ -1,28 +1,24 @@
 package reson.chocomedia.view
 
-import android.content.Context
+import android.app.Activity
 import android.content.Intent
-import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat.*
-import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_video.view.*
-import reson.chocomedia.MainActivity
 import reson.chocomedia.MainApplication
 import reson.chocomedia.R
 import reson.chocomedia.VideoInfoActivity
-import reson.chocomedia.util.VideoBean
-import java.io.Serializable
+import reson.chocomedia.database.VideoBean
 import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
 
 
-class VideoListRecyclerAdapter(val dataList: List<VideoBean>, val context: Context): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class VideoListRecyclerAdapter(val dataList: List<VideoBean>, val activity: Activity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return VideoItemViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_video, parent, false))
     }
@@ -41,15 +37,15 @@ class VideoListRecyclerAdapter(val dataList: List<VideoBean>, val context: Conte
             val dateString = convertDateString(videoInfo.created_at)
             holder.createdTV.text = dateString
             holder.itemll.setOnClickListener {
-                val intent = Intent(context, VideoInfoActivity::class.java).apply {
+                val intent = Intent(activity, VideoInfoActivity::class.java).apply {
                     putExtra(VideoInfoActivity.Key_thumb, videoInfo.thumb)
                     putExtra(VideoInfoActivity.Key_name, videoInfo.name)
                     putExtra(VideoInfoActivity.Key_rating, rateString)
                     putExtra(VideoInfoActivity.Key_created_at, dateString)
                     putExtra(VideoInfoActivity.Key_total_views, videoInfo.total_views)
                 }
-                var options = ActivityOptionsCompat.makeSceneTransitionAnimation(context as MainActivity, holder.thumbIV, "img_transition")
-                startActivity(context, intent, options.toBundle())
+                val options = ActivityOptionsCompat.makeSceneTransitionAnimation(activity, holder.thumbIV, activity.resources.getString(R.string.transition_name))
+                startActivity(activity, intent, options.toBundle())
             }
         }
     }

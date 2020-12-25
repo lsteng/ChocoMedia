@@ -6,7 +6,34 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <LinearLayout
+        android:id="@+id/searchBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/layout_padding"
+        android:orientation="horizontal">
+        <AutoCompleteTextView
+            android:id="@+id/searchTV"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            android:hint="@string/search_hint"
+            android:layout_marginRight="@dimen/layout_padding"
+            android:layout_marginLeft="@dimen/layout_padding"
+            android:completionThreshold="1"
+            android:singleLine="true"/>
+        <Button android:id="@+id/search"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            android:textColor="@color/purple_700"
+            android:text="@string/search"/>
+    </LinearLayout>
+
     <androidx.recyclerview.widget.RecyclerView
+        android:layout_below="@id/searchBar"
         android:id="@+id/recycler"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

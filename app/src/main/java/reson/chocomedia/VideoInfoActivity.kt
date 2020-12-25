@@ -3,9 +3,6 @@ package reson.chocomedia
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_videoinfo.*
-import kotlinx.android.synthetic.main.item_video.view.*
-import reson.chocomedia.util.VideoBean
-import java.io.Serializable
 
 class VideoInfoActivity: AppCompatActivity() {
     val TAG = "VideoInfoActivity"

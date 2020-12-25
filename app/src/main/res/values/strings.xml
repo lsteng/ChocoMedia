@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">ChocoMedia</string>
+    <string name="transition_name">img_transition</string>
+    <string name="search">搜尋</string>
+    <string name="search_hint">請輸入部分劇名</string>
 </resources>
