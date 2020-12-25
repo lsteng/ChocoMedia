@@ -10,14 +10,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.item_refresh.*
 import kotlinx.coroutines.*
 import reson.chocomedia.constant.GlobalConstant
 import reson.chocomedia.database.VideoBean
 import reson.chocomedia.database.VideoDatabase
-import reson.chocomedia.util.HttpUtil
 import reson.chocomedia.database.VideoListBean
+import reson.chocomedia.util.HttpUtil
 import reson.chocomedia.view.VideoListRecyclerAdapter
 import kotlin.coroutines.CoroutineContext
 
@@ -25,6 +26,9 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
     val TAG = "MainActivity"
     lateinit var mActivity: Activity
     var videoListRecyclerAdapter: VideoListRecyclerAdapter? = null
+    val gson = Gson()
+    val SearchKeyTag = "searchKey"
+    val SearchDataTag = "searchData"
 
     lateinit var job: Job
     //此errorHandler用來接 CoroutineScope 沒有被 try-catch 包起來的 exceptions
@@ -65,12 +69,18 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
 
     fun initData(){
         showProgress(true)
-        val keyword = getSearchKey()
-        if (keyword.isNullOrEmpty()){
+        val searchDataMap = getSearchData()
+        val searchKey = searchDataMap?.get(SearchKeyTag)
+        val searchData = searchDataMap?.get(SearchDataTag)
+        if (searchData.isNullOrEmpty()){
             getData(true)
         } else{
-            queryData(keyword, false)
             getData(false)
+            if(!searchKey.isNullOrEmpty()){
+                searchTV.setText(if (searchKey.isNullOrEmpty()){ "" } else { searchKey })
+            }
+            val listType = object : TypeToken<ArrayList<VideoBean>>() {}.type
+            showResult(gson.fromJson(searchData, listType))
         }
     }
 
@@ -80,7 +90,6 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
             if (isShowResult){
                 showProgress(true)
             }
-            val gson = Gson()
             launch {
                 val response = HttpUtil.getDataSting(GlobalConstant.ApiUrl)
                 val videoList = gson.fromJson(response, VideoListBean::class.java)
@@ -96,14 +105,18 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
         }
     }
 
-    fun putSearchKey(value: String){
+    fun putSearchData(key: String, data: String){
         val prefs = getSharedPreferences("searchInfo", Context.MODE_PRIVATE)
-        prefs.edit().putString("searchKey", value).commit()
+        prefs.edit().putString(SearchKeyTag, key).commit()
+        prefs.edit().putString(SearchDataTag, data).commit()
     }
 
-    fun getSearchKey(): String?{
+    fun getSearchData(): Map<String?, String?>?{
         val prefs = getSharedPreferences("searchInfo", Context.MODE_PRIVATE)
-        return prefs.getString("searchKey", null)
+        var dataMap = mutableMapOf<String?, String?>()
+        dataMap.put(SearchKeyTag, prefs.getString(SearchKeyTag, null))
+        dataMap.put(SearchDataTag, prefs.getString(SearchDataTag, null))
+        return dataMap
     }
 
     fun queryData(keyword: String, isSaveKeyword: Boolean){
@@ -114,7 +127,7 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
                 Snackbar.make(mainRL, "查無相關戲劇資料！", Snackbar.LENGTH_SHORT).show()
             } else{
                 if (isSaveKeyword){
-                    putSearchKey(keyword)
+                    putSearchData(keyword, gson.toJson(videoInfoList))
                 }
                 showResult(videoInfoList)
             }
