@@ -1,6 +1,7 @@
 package reson.chocomedia
 
 import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -47,21 +48,13 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
         recycler.adapter = videoListRecyclerAdapter
 
         job = Job()
-        getData()
+        initData()
         refreshRL.setOnClickListener {
-            getData()
+            getData(true)
         }
 
         search.setOnClickListener {
-            launch {
-                val keyWord = searchTV.text.toString().trim()
-                var videoInfoList = VideoDatabase.getInstance(mActivity)?.videoInfoDao()?.searchVideoByName(keyWord)
-                if (videoInfoList.isNullOrEmpty()){
-                    Snackbar.make(mainRL, "查無相關戲劇資料！", Snackbar.LENGTH_SHORT).show()
-                } else{
-                    showResult(videoInfoList)
-                }
-            }
+            queryData(searchTV.text.toString().trim(), true)
         }
     }
 
@@ -70,19 +63,61 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
         job.cancel()
     }
 
-    fun getData(){
+    fun initData(){
+        showProgress(true)
+        val keyword = getSearchKey()
+        if (keyword.isNullOrEmpty()){
+            getData(true)
+        } else{
+            queryData(keyword, false)
+            getData(false)
+        }
+    }
+
+    fun getData(isShowResult: Boolean){
         if (HttpUtil.haveInternet(mActivity)){
             showRetry(false, "")
-            showProgress(true)
+            if (isShowResult){
+                showProgress(true)
+            }
             val gson = Gson()
             launch {
                 val response = HttpUtil.getDataSting(GlobalConstant.ApiUrl)
                 val videoList = gson.fromJson(response, VideoListBean::class.java)
                 VideoDatabase.getInstance(mActivity)?.videoInfoDao()?.insertAll(videoList.data)
-                showResult(videoList.data)
+                if (isShowResult){
+                    showResult(videoList.data)
+                }
             }
         } else{
-            showRetry(true, "No Internet Connection")
+            if (isShowResult){
+                showRetry(true, "No Internet Connection")
+            }
+        }
+    }
+
+    fun putSearchKey(value: String){
+        val prefs = getSharedPreferences("searchInfo", Context.MODE_PRIVATE)
+        prefs.edit().putString("searchKey", value).commit()
+    }
+
+    fun getSearchKey(): String?{
+        val prefs = getSharedPreferences("searchInfo", Context.MODE_PRIVATE)
+        return prefs.getString("searchKey", null)
+    }
+
+    fun queryData(keyword: String, isSaveKeyword: Boolean){
+        showProgress(true)
+        launch {
+            var videoInfoList = VideoDatabase.getInstance(mActivity)?.videoInfoDao()?.searchVideoByName(keyword)
+            if (videoInfoList.isNullOrEmpty()){
+                Snackbar.make(mainRL, "查無相關戲劇資料！", Snackbar.LENGTH_SHORT).show()
+            } else{
+                if (isSaveKeyword){
+                    putSearchKey(keyword)
+                }
+                showResult(videoInfoList)
+            }
         }
     }
 
