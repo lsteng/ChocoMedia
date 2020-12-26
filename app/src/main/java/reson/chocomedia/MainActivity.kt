@@ -57,8 +57,16 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
             getData(true)
         }
 
+        swipeRefreshLayout.setOnRefreshListener {
+            searchTV.setText("")
+            getData(true)
+        }
+
         search.setOnClickListener {
-            queryData(searchTV.text.toString().trim(), true)
+            val keyword = searchTV.text.toString().trim()
+            if(!keyword.isNullOrBlank()){
+                queryData(searchTV.text.toString().trim(), true)
+            }
         }
     }
 
@@ -100,7 +108,13 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
             }
         } else{
             if (isShowResult){
-                showRetry(true, "No Internet Connection")
+                val alertString = "No Internet Connection"
+                if (videoListRecyclerAdapter != null){
+                    showProgress(false)
+                    Snackbar.make(mainRL, alertString, Snackbar.LENGTH_SHORT).show()
+                } else{
+                    showRetry(true, alertString)
+                }
             }
         }
     }
@@ -124,6 +138,7 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
         launch {
             var videoInfoList = VideoDatabase.getInstance(mActivity)?.videoInfoDao()?.searchVideoByName(keyword)
             if (videoInfoList.isNullOrEmpty()){
+                showProgress(false)
                 Snackbar.make(mainRL, "查無相關戲劇資料！", Snackbar.LENGTH_SHORT).show()
             } else{
                 if (isSaveKeyword){
@@ -158,12 +173,12 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
     }
 
     fun showProgress(isShow: Boolean){
-        if (progressBar != null){
-            if (isShow){
-                progressBar.visibility = View.VISIBLE
-            } else{
-                progressBar.visibility = View.GONE
-            }
+        if (isShow){
+//            if (progressBar != null){ progressBar.visibility = View.VISIBLE }
+            swipeRefreshLayout.setRefreshing(true)
+        } else{
+//            if (progressBar != null){ progressBar.visibility = View.GONE }
+            swipeRefreshLayout.setRefreshing(false)
         }
     }
 
