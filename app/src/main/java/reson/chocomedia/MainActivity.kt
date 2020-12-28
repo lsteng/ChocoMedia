@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.ArrayAdapter
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -15,6 +16,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.item_refresh.*
 import kotlinx.coroutines.*
 import reson.chocomedia.constant.GlobalConstant
+import reson.chocomedia.database.SearchRecord
 import reson.chocomedia.database.VideoBean
 import reson.chocomedia.database.VideoDatabase
 import reson.chocomedia.database.VideoListBean
@@ -59,6 +61,7 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
 
         swipeRefreshLayout.setOnRefreshListener {
             searchTV.setText("")
+            putSearchData("", "")
             getData(true)
         }
 
@@ -77,6 +80,7 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
 
     fun initData(){
         showProgress(true)
+        getSearchRecord()
         val searchDataMap = getSearchData()
         val searchKey = searchDataMap?.get(SearchKeyTag)
         val searchData = searchDataMap?.get(SearchDataTag)
@@ -89,6 +93,17 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
             }
             val listType = object : TypeToken<ArrayList<VideoBean>>() {}.type
             showResult(gson.fromJson(searchData, listType))
+        }
+    }
+
+    fun getSearchRecord(){
+        launch {
+            val searchRecordList = VideoDatabase.getInstance(mActivity)?.SearchRecordDao()?.queryAll()
+            searchRecordList.let {
+                mActivity.runOnUiThread {
+                    searchTV.setAdapter(ArrayAdapter<String>(mActivity, android.R.layout.simple_list_item_1, it))
+                }
+            }
         }
     }
 
@@ -143,6 +158,7 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
             } else{
                 if (isSaveKeyword){
                     putSearchData(keyword, gson.toJson(videoInfoList))
+                    VideoDatabase.getInstance(mActivity)?.SearchRecordDao()?.insert(SearchRecord(keyword, System.currentTimeMillis()))
                 }
                 showResult(videoInfoList)
             }

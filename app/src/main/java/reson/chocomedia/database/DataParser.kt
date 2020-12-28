@@ -17,3 +17,10 @@ class VideoBean(
     val thumb: String,        //戲劇縮圖
     val rating: Double        //戲劇評分
 )
+
+@Entity
+class SearchRecord(
+        @PrimaryKey
+        val keyword: String,
+        val time: Long
+)
