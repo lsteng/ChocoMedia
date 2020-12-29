@@ -24,5 +24,6 @@ class VideoInfoActivity: AppCompatActivity() {
         totalviewsTV.text = "觀看:${intent.getStringExtra(Key_total_views)}"
         createdTV.text = intent.getStringExtra(Key_created_at)
         MainApplication.imageLoader.displayImage(intent.getStringExtra(Key_thumb), thumbIV)
+//        thumbIV.setImageURI(intent.getStringExtra(Key_thumb))
     }
 }

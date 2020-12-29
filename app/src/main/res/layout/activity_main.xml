@@ -45,6 +45,8 @@
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
+    <include layout="@layout/item_refresh"/>
+
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
@@ -53,6 +55,9 @@
         style="?android:attr/progressBarStyleLarge"
         android:visibility="gone"/>
 
-    <include layout="@layout/item_refresh"/>
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </RelativeLayout>

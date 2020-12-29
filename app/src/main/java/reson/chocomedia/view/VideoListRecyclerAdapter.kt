@@ -6,19 +6,22 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.app.ActivityOptionsCompat
-import androidx.core.content.ContextCompat.*
+import androidx.core.content.ContextCompat.startActivity
+import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_video.view.*
 import reson.chocomedia.MainApplication
 import reson.chocomedia.R
 import reson.chocomedia.VideoInfoActivity
 import reson.chocomedia.database.VideoBean
+import reson.chocomedia.frag.VideoInfoFrag
+import reson.chocomedia.util.FragTransUtil
 import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
 
 
-class VideoListRecyclerAdapter(val dataList: List<VideoBean>, val activity: Activity): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class VideoListRecyclerAdapter(val dataList: List<VideoBean>, val activity: Activity, val fragmentManager: FragmentManager): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return VideoItemViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_video, parent, false))
     }
@@ -31,6 +34,7 @@ class VideoListRecyclerAdapter(val dataList: List<VideoBean>, val activity: Acti
         if (holder is VideoItemViewHolder){
             val videoInfo = dataList[pos]
             MainApplication.imageLoader.displayImage(videoInfo.thumb, holder.thumbIV)
+//            holder.thumbIV.setImageURI(videoInfo.thumb)
             val rateString = "★ ${videoInfo.rating.roundTo2DecimalPlaces()}"
             holder.ratingTV.text = rateString
             holder.nameTV.text = videoInfo.name
@@ -46,6 +50,14 @@ class VideoListRecyclerAdapter(val dataList: List<VideoBean>, val activity: Acti
                 }
                 val options = ActivityOptionsCompat.makeSceneTransitionAnimation(activity, holder.thumbIV, activity.resources.getString(R.string.transition_name))
                 startActivity(activity, intent, options.toBundle())
+
+//                FragTransUtil.replaceContentFrag(
+//                    VideoInfoFrag.newInstance(videoInfo.thumb, videoInfo.name, rateString, dateString, videoInfo.total_views),
+//                    VideoInfoFrag.FRAG_TRANS_NAME,
+//                    fragmentManager,
+//                    holder.thumbIV,
+//                    activity.resources.getString(R.string.transition_name)
+//                )
             }
         }
     }

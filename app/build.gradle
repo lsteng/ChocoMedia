@@ -49,6 +49,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.5'
     // for Image URL
     implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
+    implementation 'com.facebook.fresco:fresco:2.3.0'
     // for DB
     implementation 'com.facebook.stetho:stetho:1.5.0'
 

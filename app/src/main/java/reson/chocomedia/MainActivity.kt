@@ -169,7 +169,7 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
         mActivity.runOnUiThread{
             videoInfoList.let {
                 if (!it.isNullOrEmpty()) {
-                    videoListRecyclerAdapter = VideoListRecyclerAdapter(it, mActivity)
+                    videoListRecyclerAdapter = VideoListRecyclerAdapter(it, mActivity, supportFragmentManager)
                     recycler.adapter = videoListRecyclerAdapter
                 }
             }
@@ -197,6 +197,5 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
             swipeRefreshLayout.setRefreshing(false)
         }
     }
-
-
+    
 }
