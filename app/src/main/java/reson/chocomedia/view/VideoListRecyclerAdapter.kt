@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_video.view.*
+import reson.chocomedia.MainActivity
 import reson.chocomedia.MainApplication
 import reson.chocomedia.R
 import reson.chocomedia.VideoInfoActivity
@@ -41,6 +42,7 @@ class VideoListRecyclerAdapter(val dataList: List<VideoBean>, val activity: Acti
             val dateString = convertDateString(videoInfo.created_at)
             holder.createdTV.text = dateString
             holder.itemll.setOnClickListener {
+                (activity as MainActivity).hideKeyboard()
                 val intent = Intent(activity, VideoInfoActivity::class.java).apply {
                     putExtra(VideoInfoActivity.Key_thumb, videoInfo.thumb)
                     putExtra(VideoInfoActivity.Key_name, videoInfo.name)

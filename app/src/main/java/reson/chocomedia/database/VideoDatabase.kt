@@ -27,7 +27,7 @@ abstract class VideoDatabase: RoomDatabase() {
 
         val MIGRATION_1_2 = object: Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE `SearchRecord` (`keyword` TEXT, `time` INTEGER, PRIMARY KEY(`keyword`))")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `SearchRecord` (`keyword` TEXT NOT NULL, `time` INTEGER NOT NULL, PRIMARY KEY(`keyword`))")
             }
         }
     }

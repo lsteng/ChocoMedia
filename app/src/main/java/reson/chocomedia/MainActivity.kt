@@ -5,7 +5,10 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
+import android.widget.TextView.OnEditorActionListener
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -61,16 +64,29 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
 
         swipeRefreshLayout.setOnRefreshListener {
             searchTV.setText("")
+            hideKeyboard()
             putSearchData("", "")
             getData(true)
         }
 
         search.setOnClickListener {
-            val keyword = searchTV.text.toString().trim()
-            if(!keyword.isNullOrBlank()){
-                queryData(searchTV.text.toString().trim(), true)
-            }
+            clickSearchBtn()
         }
+
+        searchTV.setOnEditorActionListener (
+            OnEditorActionListener { textView, actionId, keyEvent  ->
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    clickSearchBtn()
+                    return@OnEditorActionListener true
+                }
+                false
+            }
+        )
+    }
+
+    override fun onResume() {
+        super.onResume()
+        hideKeyboard()
     }
 
     override fun onDestroy() {
@@ -89,16 +105,25 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
         } else{
             getData(false)
             if(!searchKey.isNullOrEmpty()){
-                searchTV.setText(if (searchKey.isNullOrEmpty()){ "" } else { searchKey })
+                searchTV.setText(searchKey)
+                hideKeyboard()
             }
             val listType = object : TypeToken<ArrayList<VideoBean>>() {}.type
             showResult(gson.fromJson(searchData, listType))
         }
     }
 
+    fun clickSearchBtn(){
+        val keyword = searchTV.text.toString().trim()
+        if(!keyword.isNullOrBlank()){
+            hideKeyboard()
+            queryData(searchTV.text.toString().trim(), true)
+        }
+    }
+
     fun getSearchRecord(){
         launch {
-            val searchRecordList = VideoDatabase.getInstance(mActivity)?.SearchRecordDao()?.queryAll()
+            val searchRecordList = VideoDatabase.getInstance(mActivity)?.SearchRecordDao()?.queryLimit(5)
             searchRecordList.let {
                 mActivity.runOnUiThread {
                     searchTV.setAdapter(ArrayAdapter<String>(mActivity, android.R.layout.simple_list_item_1, it))
@@ -159,6 +184,7 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
                 if (isSaveKeyword){
                     putSearchData(keyword, gson.toJson(videoInfoList))
                     VideoDatabase.getInstance(mActivity)?.SearchRecordDao()?.insert(SearchRecord(keyword, System.currentTimeMillis()))
+                    getSearchRecord()
                 }
                 showResult(videoInfoList)
             }
@@ -197,5 +223,10 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
             swipeRefreshLayout.setRefreshing(false)
         }
     }
-    
+
+    fun hideKeyboard(){
+        searchTV.clearFocus()
+        val imm: InputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(window.decorView.windowToken, 0)
+    }
 }

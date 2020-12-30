@@ -12,4 +12,7 @@ interface SearchRecordDao {
 
     @Query("SELECT keyword FROM SearchRecord ORDER BY time DESC")
     fun queryAll(): List<String>
+
+    @Query("SELECT keyword FROM SearchRecord ORDER BY time DESC LIMIT :number")
+    fun queryLimit(number: Int): List<String>
 }

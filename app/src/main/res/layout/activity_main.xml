@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:padding="@dimen/layout_padding"
         android:orientation="horizontal">
-        <AutoCompleteTextView
+        <reson.chocomedia.view.InstantAutoComplete
             android:id="@+id/searchTV"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -22,7 +22,8 @@
             android:layout_marginRight="@dimen/layout_padding"
             android:layout_marginLeft="@dimen/layout_padding"
             android:completionThreshold="1"
-            android:singleLine="true"/>
+            android:singleLine="true"
+            android:imeOptions="actionSearch" />
         <Button android:id="@+id/search"
             android:layout_width="0dp"
             android:layout_height="match_parent"
