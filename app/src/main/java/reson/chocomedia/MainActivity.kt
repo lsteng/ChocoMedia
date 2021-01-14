@@ -115,7 +115,7 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
 
     fun clickSearchBtn(){
         val keyword = searchTV.text.toString().trim()
-        if(!keyword.isNullOrBlank()){
+        if(!keyword.isNullOrEmpty()){
             hideKeyboard()
             queryData(searchTV.text.toString().trim(), true)
         }
