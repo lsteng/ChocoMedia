@@ -3,70 +3,73 @@ package reson.chocomedia
 import android.app.Activity
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.ArrayAdapter
 import android.widget.TextView.OnEditorActionListener
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.item_refresh.*
-import kotlinx.coroutines.*
-import reson.chocomedia.constant.GlobalConstant
-import reson.chocomedia.database.SearchRecord
 import reson.chocomedia.database.VideoBean
-import reson.chocomedia.database.VideoDatabase
-import reson.chocomedia.database.VideoListBean
-import reson.chocomedia.util.HttpUtil
 import reson.chocomedia.view.VideoListRecyclerAdapter
-import kotlin.coroutines.CoroutineContext
 
-class MainActivity: AppCompatActivity(), CoroutineScope {
+class MainActivity: AppCompatActivity() {
     val TAG = "MainActivity"
     lateinit var mActivity: Activity
     var videoListRecyclerAdapter: VideoListRecyclerAdapter? = null
-    val gson = Gson()
-    val SearchKeyTag = "searchKey"
-    val SearchDataTag = "searchData"
-
-    lateinit var job: Job
-    //此errorHandler用來接 CoroutineScope 沒有被 try-catch 包起來的 exceptions
-    val errorHandler = CoroutineExceptionHandler { _, error ->
-        Log.e(TAG, error.toString())
-        this.runOnUiThread{
-            showProgress(false)
-            AlertDialog.Builder(this).setMessage(error.message).setPositiveButton("OK", null).show()
-        }
-    }
-
-    override val coroutineContext: CoroutineContext
-        get() = job + Dispatchers.IO + errorHandler
+    lateinit var viewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
         mActivity = this
+
         recycler.layoutManager = LinearLayoutManager(mActivity)
         recycler.setHasFixedSize(true)
         recycler.adapter = videoListRecyclerAdapter
 
-        job = Job()
-        initData()
+        viewModel.isShowProgress.observe(this, Observer {
+            showProgress(it)
+        })
+        viewModel.alertMessage.observe(this, Observer {
+            showProgress(false)
+            if(!it.isNullOrEmpty()){
+                if (videoListRecyclerAdapter != null){
+                    Snackbar.make(mainRL, it, Snackbar.LENGTH_SHORT).show()
+                } else{
+                    showRetry(true, it)
+                }
+            }
+        })
+        viewModel.searchRecordAdapter.observe(this, Observer {
+            searchTV.setAdapter(it)
+        })
+        viewModel.videoInfoResultList.observe(this, Observer {
+            showResult(it)
+        })
+        viewModel.searchText.observe(this, Observer {
+            searchTV.setText(it)
+        })
+        viewModel.isHideKeyboard.observe(this, Observer {
+            if(it){
+                hideKeyboard()
+            }
+        })
+
         refreshRL.setOnClickListener {
-            getData(true)
+            viewModel.getData(true)
         }
 
         swipeRefreshLayout.setOnRefreshListener {
             searchTV.setText("")
             hideKeyboard()
-            putSearchData("", "")
-            getData(true)
+            viewModel.putSearchData("", "")
+            viewModel.getData(true)
         }
 
         search.setOnClickListener {
@@ -89,105 +92,11 @@ class MainActivity: AppCompatActivity(), CoroutineScope {
         hideKeyboard()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        job.cancel()
-    }
-
-    fun initData(){
-        showProgress(true)
-        getSearchRecord()
-        val searchDataMap = getSearchData()
-        val searchKey = searchDataMap?.get(SearchKeyTag)
-        val searchData = searchDataMap?.get(SearchDataTag)
-        if (searchData.isNullOrEmpty()){
-            getData(true)
-        } else{
-            getData(false)
-            if(!searchKey.isNullOrEmpty()){
-                searchTV.setText(searchKey)
-                hideKeyboard()
-            }
-            val listType = object : TypeToken<ArrayList<VideoBean>>() {}.type
-            showResult(gson.fromJson(searchData, listType))
-        }
-    }
-
     fun clickSearchBtn(){
         val keyword = searchTV.text.toString().trim()
         if(!keyword.isNullOrEmpty()){
             hideKeyboard()
-            queryData(searchTV.text.toString().trim(), true)
-        }
-    }
-
-    fun getSearchRecord(){
-        launch {
-            val searchRecordList = VideoDatabase.getInstance(mActivity)?.SearchRecordDao()?.queryLimit(5)
-            searchRecordList.let {
-                mActivity.runOnUiThread {
-                    searchTV.setAdapter(ArrayAdapter<String>(mActivity, android.R.layout.simple_list_item_1, it))
-                }
-            }
-        }
-    }
-
-    fun getData(isShowResult: Boolean){
-        if (HttpUtil.haveInternet(mActivity)){
-            showRetry(false, "")
-            if (isShowResult){
-                showProgress(true)
-            }
-            launch {
-                val response = HttpUtil.getDataSting(GlobalConstant.ApiUrl)
-                val videoList = gson.fromJson(response, VideoListBean::class.java)
-                VideoDatabase.getInstance(mActivity)?.videoInfoDao()?.insertAll(videoList.data)
-                if (isShowResult){
-                    showResult(videoList.data)
-                }
-            }
-        } else{
-            if (isShowResult){
-                val alertString = "No Internet Connection"
-                if (videoListRecyclerAdapter != null){
-                    showProgress(false)
-                    Snackbar.make(mainRL, alertString, Snackbar.LENGTH_SHORT).show()
-                } else{
-                    showRetry(true, alertString)
-                }
-            }
-        }
-    }
-
-    fun putSearchData(key: String, data: String){
-        val prefs = getSharedPreferences("searchInfo", Context.MODE_PRIVATE)
-        prefs.edit().putString(SearchKeyTag, key).commit()
-        prefs.edit().putString(SearchDataTag, data).commit()
-    }
-
-    fun getSearchData(): Map<String?, String?>?{
-        val prefs = getSharedPreferences("searchInfo", Context.MODE_PRIVATE)
-        var dataMap = mutableMapOf<String?, String?>()
-        dataMap.put(SearchKeyTag, prefs.getString(SearchKeyTag, null))
-        dataMap.put(SearchDataTag, prefs.getString(SearchDataTag, null))
-        return dataMap
-    }
-
-    fun queryData(keyword: String, isSaveKeyword: Boolean){
-        showProgress(true)
-        launch {
-            var videoInfoList = VideoDatabase.getInstance(mActivity)?.videoInfoDao()?.searchVideoByName(keyword)
-            if (videoInfoList.isNullOrEmpty()){
-                showProgress(false)
-                Snackbar.make(mainRL, "查無相關戲劇資料！", Snackbar.LENGTH_SHORT).show()
-            } else{
-                if (isSaveKeyword){
-                    putSearchData(keyword, gson.toJson(videoInfoList))
-                    VideoDatabase.getInstance(mActivity)?.SearchRecordDao()?.insert(SearchRecord(keyword, System.currentTimeMillis()))
-                    getSearchRecord()
-                }
-                showResult(videoInfoList)
-            }
+            viewModel.queryData(searchTV.text.toString().trim(), true)
         }
     }
 
